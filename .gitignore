@@ -27,6 +27,7 @@ GoogleService-Info.plist
 
 # Firebase CLI / emuladores
 .firebase/
+.fbconfig/
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*

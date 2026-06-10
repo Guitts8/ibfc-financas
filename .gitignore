@@ -15,6 +15,23 @@ expo-env.d.ts
 .env.*
 !.env.example
 
+# Firebase service-account / admin keys (NUNCA commitar — dão acesso total ao projeto)
+**/serviceAccount*.json
+**/*serviceaccount*.json
+**/*-adminsdk-*.json
+**/firebase-adminsdk-*.json
+
+# Firebase native config (gerado por build; não é necessário com o SDK JS + .env)
+google-services.json
+GoogleService-Info.plist
+
+# Firebase CLI / emuladores
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+database-debug.log*
+
 # Native
 .kotlin/
 *.orig.*
@@ -35,6 +52,12 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
 # local env files
 .env*.local

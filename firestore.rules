@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Regras de segurança do Firestore — IBFC Finanças.
+//
+// Princípio: cada membro só pode ler/escrever os PRÓPRIOS dados financeiros.
+// Ninguém (nem outros usuários logados) acessa dados de terceiros.
+//
+// Como aplicar: cole estas regras no Console do Firebase em
+// Firestore Database > Regras, ou faça deploy com a Firebase CLI:
+//   firebase deploy --only firestore:rules
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Documento do próprio usuário e todas as subcoleções
+    // (transactions, goals, ...).
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // Bloqueia qualquer outro caminho por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,56 +1,86 @@
-# Welcome to your Expo app 👋
+# IBFC Finanças 📲
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo de **finanças pessoais** para os membros da **Igreja Batista Filadélfia Canoas (IBFC)**.
+Projeto filantrópico, sem fins lucrativos: ajuda cada irmão a controlar e guardar o próprio dinheiro.
 
-## Get started
+- **Tecnologia:** Expo (React Native) + TypeScript + Firebase (Auth + Firestore)
+- **Plataformas:** Android e iOS (mesma base de código)
+- **Privacidade:** cada usuário só acessa os próprios dados (ver `firestore.rules`)
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ⚠️ Importante neste ambiente (Windows)
 
-2. Start the app
+Esta máquina **não tem permissão de escrita na pasta home do usuário** (`C:\Users\...`),
+onde o Expo normalmente cria a pasta `~/.expo`. Para contornar, os scripts do
+`package.json` definem a variável `__UNSAFE_EXPO_HOME_DIRECTORY=.expo-home`, que
+redireciona esse diretório para dentro do projeto (pasta ignorada pelo git).
 
-   ```bash
-   npx expo start
-   ```
+➡️ **Sempre rode o app pelos scripts npm** (`npm start`, `npm run android`, etc.),
+nunca `npx expo start` direto, ou o Expo falhará com `EPERM ... mkdir '...\.expo'`.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Configuração inicial (uma vez)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Instalar dependências
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Criar o projeto no Firebase
 
-### Other setup steps
+1. Acesse <https://console.firebase.google.com> e crie um projeto (ex.: `ibfc-financas`).
+2. No projeto, clique no ícone **Web** (`</>`) e registre um app web.
+3. O console mostrará um objeto `firebaseConfig`. Guarde esses valores.
+4. Em **Authentication > Sign-in method**, ative **E-mail/senha**.
+5. Em **Firestore Database**, crie o banco (modo de produção).
+6. Em **Firestore Database > Regras**, cole o conteúdo de [`firestore.rules`](./firestore.rules) e publique.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 3. Preencher as credenciais
 
-## Learn more
+```bash
+cp .env.example .env
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Abra o `.env` e preencha os valores do `firebaseConfig` (todas as variáveis `EXPO_PUBLIC_FIREBASE_*`).
+O arquivo `.env` é ignorado pelo git e **não** deve ser commitado.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## Rodar o app
 
-Join our community of developers creating universal apps.
+```bash
+npm start          # abre o Metro; leia o QR code com o app Expo Go
+npm run android    # abre direto no emulador/dispositivo Android
+npm run ios        # abre no simulador iOS (requer macOS)
+npm run web        # abre no navegador
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Para testar no celular físico sem build nativo, instale o **Expo Go**
+(Play Store / App Store) e leia o QR code exibido pelo `npm start`.
+
+---
+
+## Estrutura do projeto
+
+```
+src/
+  app/                 # telas (Expo Router — roteamento por arquivos)
+  components/          # componentes reutilizáveis
+  constants/theme.ts   # cores da marca IBFC + tema claro/escuro
+  contexts/            # AuthContext (estado de login)
+  firebase/config.ts   # inicialização do Firebase (Auth + Firestore)
+  types/finance.ts     # modelos de dados (transações, metas, categorias)
+firestore.rules        # regras de segurança (cada membro só vê o que é seu)
+```
+
+## Status
+
+- [x] Fundação: projeto, tema, Firebase, modelos de dados, regras de segurança
+- [ ] Telas de login e cadastro
+- [ ] Dashboard (saldo do mês, entradas vs. saídas)
+- [ ] Lançar e listar transações
+- [ ] Metas de economia
+- [ ] Orçamento mensal por categoria

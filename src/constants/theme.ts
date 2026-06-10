@@ -1,26 +1,49 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Tema do app IBFC Finanças.
+ * As cores de marca vêm do logo da igreja (vermelho, azul e verde-água
+ * sobre cinza escuro). Há cores semânticas para finanças: receita (verde),
+ * despesa (vermelho) e o azul como cor de ação principal.
+ *
+ * Estilização: o template usa NativeWind (ver global.css). Também é possível
+ * usar StyleSheet normal do React Native consumindo estas constantes.
  */
 
 import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/** Cores da identidade visual da IBFC (extraídas do logo). */
+export const Brand = {
+  red: '#E5392E',
+  blue: '#1E66E0',
+  teal: '#18C29C',
+  /** Cinza escuro de fundo do logo. */
+  charcoal: '#1F2123',
+  charcoalElevated: '#2B2D31',
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
+    text: '#11181C',
+    background: '#FFFFFF',
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
     textSecondary: '#60646C',
+    border: '#E2E4E9',
+    tint: Brand.blue,
+    income: '#0FA37F',
+    expense: '#D8362B',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#ECEDEE',
+    background: Brand.charcoal,
+    backgroundElement: Brand.charcoalElevated,
+    backgroundSelected: '#3A3D42',
+    textSecondary: '#9BA1A6',
+    border: '#3A3D42',
+    tint: Brand.blue,
+    income: Brand.teal,
+    expense: Brand.red,
   },
 } as const;
 

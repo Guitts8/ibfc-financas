@@ -5,9 +5,15 @@ node_modules/
 
 # Expo
 .expo/
+.expo-home/
 dist/
 web-build/
 expo-env.d.ts
+
+# Firebase / env secrets
+.env
+.env.*
+!.env.example
 
 # Native
 .kotlin/

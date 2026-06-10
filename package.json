@@ -1,9 +1,11 @@
 {
-  "name": "tmp_init",
+  "name": "ibfc-financas",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.16",
+    "@firebase/auth": "1.13.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~56.0.9",
     "expo-constants": "~56.0.17",
     "expo-device": "~56.0.4",
@@ -17,6 +19,7 @@
     "expo-symbols": "~56.0.6",
     "expo-system-ui": "~56.0.5",
     "expo-web-browser": "~56.0.5",
+    "firebase": "^12.14.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
@@ -29,15 +32,17 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "cross-env": "^10.1.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "cross-env __UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo start",
+    "android": "cross-env __UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo start --android",
+    "ios": "cross-env __UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo start --ios",
+    "web": "cross-env __UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo start --web",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "cross-env __UNSAFE_EXPO_HOME_DIRECTORY=.expo-home expo lint",
+    "deploy:rules": "npx -y firebase-tools deploy --only firestore:rules"
   },
   "private": true
 }

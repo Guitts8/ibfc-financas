@@ -1,8 +1,13 @@
 /**
  * Tema do app IBFC Finanças.
- * As cores de marca vêm do logo da igreja (vermelho, azul e verde-água
- * sobre cinza escuro). Há cores semânticas para finanças: receita (verde),
- * despesa (vermelho) e o azul como cor de ação principal.
+ *
+ * Visual: claro e leve — fundo branco com tons de azul (é um app para a
+ * igreja). O azul da marca é a cor de ação e de destaque. Há cores semânticas
+ * para finanças: receita (verde) e despesa (vermelho).
+ *
+ * O app roda sempre no tema claro (ver app.json `userInterfaceStyle: "light"`
+ * e `useTheme()`); a paleta `dark` é mantida apenas por compatibilidade de
+ * tipos e uso futuro.
  *
  * Estilização: o template usa NativeWind (ver global.css). Também é possível
  * usar StyleSheet normal do React Native consumindo estas constantes.
@@ -12,26 +17,31 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-/** Cores da identidade visual da IBFC (extraídas do logo). */
+/** Cores da identidade visual da IBFC (azul como cor principal). */
 export const Brand = {
   red: '#E5392E',
   blue: '#1E66E0',
+  /** Azul mais escuro, para gradientes/realces sobre o azul principal. */
+  blueDeep: '#1450B0',
+  /** Azul bem claro, para superfícies e cartões suaves sobre o branco. */
+  blueSurface: '#EAF1FF',
   teal: '#18C29C',
-  /** Cinza escuro de fundo do logo. */
+  /** Cinza escuro do logo (usado em ícones/splash, não na UI clara). */
   charcoal: '#1F2123',
   charcoalElevated: '#2B2D31',
 } as const;
 
 export const Colors = {
   light: {
-    text: '#11181C',
+    text: '#15233B',
     background: '#FFFFFF',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    border: '#E2E4E9',
+    /** Superfície clara levemente azulada (campos, cartões secundários). */
+    backgroundElement: '#EEF3FC',
+    backgroundSelected: '#D9E6FB',
+    textSecondary: '#5B6B82',
+    border: '#DCE6F4',
     tint: Brand.blue,
-    income: '#0FA37F',
+    income: '#0E9F76',
     expense: '#D8362B',
   },
   dark: {

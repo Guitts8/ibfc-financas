@@ -11,21 +11,47 @@ import { Brand, BottomTabInset, MaxContentWidth, Spacing } from '@/constants/the
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/use-theme';
 import { useTransactions } from '@/hooks/use-transactions';
-import { addTransaction } from '@/firebase/transactions';
-import type { NewTransaction } from '@/types/finance';
+import { addTransaction, deleteTransaction, updateTransaction } from '@/firebase/transactions';
+import type { NewTransaction, Transaction } from '@/types/finance';
 
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const theme = useTheme();
   const { transactions, totals, loading, error } = useTransactions();
   const [formOpen, setFormOpen] = useState(false);
+  // Transação em edição; null quando o modal está em modo de criação.
+  const [editing, setEditing] = useState<Transaction | null>(null);
 
   const nome = user?.displayName?.trim().split(' ')[0] || 'irmão(ã)';
 
-  async function handleCreate(input: NewTransaction) {
-    if (!user) return;
-    await addTransaction(user.uid, input);
+  function openCreate() {
+    setEditing(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(transaction: Transaction) {
+    setEditing(transaction);
+    setFormOpen(true);
+  }
+
+  function closeForm() {
     setFormOpen(false);
+  }
+
+  async function handleSubmit(input: NewTransaction) {
+    if (!user) return;
+    if (editing) {
+      await updateTransaction(user.uid, editing.id, input);
+    } else {
+      await addTransaction(user.uid, input);
+    }
+    closeForm();
+  }
+
+  async function handleDelete() {
+    if (!user || !editing) return;
+    await deleteTransaction(user.uid, editing.id);
+    closeForm();
   }
 
   return (
@@ -51,7 +77,9 @@ export default function HomeScreen() {
         <FlatList
           data={transactions}
           keyExtractor={(t) => t.id}
-          renderItem={({ item }) => <TransactionRow transaction={item} />}
+          renderItem={({ item }) => (
+            <TransactionRow transaction={item} onPress={() => openEdit(item)} />
+          )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
@@ -83,25 +111,28 @@ export default function HomeScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Nova transação"
-          onPress={() => setFormOpen(true)}
+          onPress={openCreate}
           style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.85 : 1 }]}>
           <ThemedText style={styles.fabIcon}>+</ThemedText>
         </Pressable>
       </SafeAreaView>
 
-      <Modal
-        visible={formOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setFormOpen(false)}>
+      <Modal visible={formOpen} animationType="slide" transparent onRequestClose={closeForm}>
         <View style={styles.modalBackdrop}>
           <ThemedView style={styles.modalSheet}>
             <SafeAreaView edges={['bottom']}>
               <View style={styles.modalHandle} />
               <ThemedText type="subtitle" style={styles.modalTitle}>
-                Nova transação
+                {editing ? 'Editar transação' : 'Nova transação'}
               </ThemedText>
-              <TransactionForm onSubmit={handleCreate} onCancel={() => setFormOpen(false)} />
+              <TransactionForm
+                // Recria o formulário ao alternar entre criar/editar (reinicia os campos).
+                key={editing?.id ?? 'new'}
+                initial={editing ?? undefined}
+                onSubmit={handleSubmit}
+                onCancel={closeForm}
+                onDelete={editing ? handleDelete : undefined}
+              />
             </SafeAreaView>
           </ThemedView>
         </View>

@@ -9,11 +9,14 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   Timestamp,
+  updateDoc,
   type FirestoreError,
 } from 'firebase/firestore';
 
@@ -68,4 +71,24 @@ export async function addTransaction(uid: string, input: NewTransaction): Promis
     date: input.date ?? Timestamp.now(),
     createdAt: serverTimestamp(),
   });
+}
+
+/** Atualiza uma transação existente (preserva o createdAt original). */
+export async function updateTransaction(
+  uid: string,
+  id: string,
+  input: NewTransaction,
+): Promise<void> {
+  await updateDoc(doc(db, 'users', uid, 'transactions', id), {
+    type: input.type,
+    amount: input.amount,
+    categoryId: input.categoryId,
+    description: input.description.trim(),
+    date: input.date ?? Timestamp.now(),
+  });
+}
+
+/** Exclui uma transação do usuário. */
+export async function deleteTransaction(uid: string, id: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'transactions', id));
 }

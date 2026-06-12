@@ -7,13 +7,22 @@ import { PrimaryButton } from '@/components/ui/primary-button';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { DEFAULT_CATEGORIES, type NewTransaction, type TransactionType } from '@/types/finance';
+import {
+  DEFAULT_CATEGORIES,
+  type NewTransaction,
+  type Transaction,
+  type TransactionType,
+} from '@/types/finance';
 import { formatCurrency } from '@/utils/format';
 
 export interface TransactionFormProps {
-  /** Persiste a transação; deve lançar em caso de falha. */
+  /** Persiste a transação (criação ou edição); deve lançar em caso de falha. */
   onSubmit: (input: NewTransaction) => Promise<void>;
   onCancel: () => void;
+  /** Quando presente, o formulário entra em modo de edição (campos preenchidos). */
+  initial?: Transaction;
+  /** Exclui a transação em edição; quando ausente, o botão de excluir não aparece. */
+  onDelete?: () => Promise<void>;
 }
 
 /** Primeira categoria disponível para um tipo (usada como padrão). */
@@ -22,18 +31,26 @@ function firstCategoryId(type: TransactionType): string {
 }
 
 /**
- * Formulário de nova transação: tipo (entrada/saída), valor, categoria e uma
+ * Formulário de transação: tipo (entrada/saída), valor, categoria e uma
  * descrição opcional. O valor é digitado em centavos e exibido formatado.
+ * Em modo de edição (prop `initial`), os campos vêm preenchidos e a data
+ * original é preservada.
  */
-export function TransactionForm({ onSubmit, onCancel }: TransactionFormProps) {
+export function TransactionForm({ onSubmit, onCancel, initial, onDelete }: TransactionFormProps) {
   const theme = useTheme();
+  const editing = !!initial;
 
-  const [type, setType] = useState<TransactionType>('expense');
-  const [amountDigits, setAmountDigits] = useState('');
-  const [categoryId, setCategoryId] = useState(() => firstCategoryId('expense'));
-  const [description, setDescription] = useState('');
+  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
+  const [amountDigits, setAmountDigits] = useState(
+    initial ? String(Math.round(initial.amount * 100)) : '',
+  );
+  const [categoryId, setCategoryId] = useState(
+    () => initial?.categoryId ?? firstCategoryId('expense'),
+  );
+  const [description, setDescription] = useState(initial?.description ?? '');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const amount = Number(amountDigits || '0') / 100;
   const categories = useMemo(() => DEFAULT_CATEGORIES.filter((c) => c.type === type), [type]);
@@ -65,12 +82,30 @@ export function TransactionForm({ onSubmit, onCancel }: TransactionFormProps) {
         amount,
         categoryId,
         description,
-        date: Timestamp.now(),
+        // Em edição, preserva a data original do lançamento.
+        date: initial?.date ?? Timestamp.now(),
       });
       // Sucesso: a tela que chamou fecha o modal.
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível salvar.');
       setLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (loading || !onDelete) return;
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      await onDelete();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível excluir.');
+      setLoading(false);
+      setConfirmingDelete(false);
     }
   }
 
@@ -156,7 +191,23 @@ export function TransactionForm({ onSubmit, onCancel }: TransactionFormProps) {
         </ThemedText>
       )}
 
-      <PrimaryButton label="Salvar" loading={loading} onPress={handleSubmit} />
+      <PrimaryButton
+        label={editing ? 'Salvar alterações' : 'Salvar'}
+        loading={loading}
+        onPress={handleSubmit}
+      />
+
+      {editing && onDelete && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={handleDelete}
+          disabled={loading}
+          style={({ pressed }) => [styles.delete, { opacity: pressed ? 0.6 : 1 }]}>
+          <ThemedText type="smallBold" themeColor="expense">
+            {confirmingDelete ? 'Toque novamente para confirmar a exclusão' : 'Excluir transação'}
+          </ThemedText>
+        </Pressable>
+      )}
 
       <Pressable
         accessibilityRole="button"
@@ -235,6 +286,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Spacing.five,
     borderWidth: 1,
+  },
+  delete: {
+    alignSelf: 'center',
+    paddingVertical: Spacing.two,
   },
   cancel: {
     alignSelf: 'center',

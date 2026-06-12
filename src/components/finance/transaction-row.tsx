@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -7,7 +7,14 @@ import { getCategory, type Transaction } from '@/types/finance';
 import { formatCurrency, formatDayMonth } from '@/utils/format';
 
 /** Uma linha da lista de transações: categoria, descrição, data e valor. */
-export function TransactionRow({ transaction }: { transaction: Transaction }) {
+export function TransactionRow({
+  transaction,
+  onPress,
+}: {
+  transaction: Transaction;
+  /** Quando definido, a linha vira tocável (ex.: abrir edição). */
+  onPress?: () => void;
+}) {
   const theme = useTheme();
   const category = getCategory(transaction.categoryId);
   const isIncome = transaction.type === 'income';
@@ -16,7 +23,11 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
   const title = transaction.description?.trim() || category?.label || 'Transação';
 
   return (
-    <View style={styles.row}>
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      onPress={onPress}
+      disabled={!onPress}
+      style={({ pressed }) => [styles.row, pressed && onPress ? { opacity: 0.6 } : null]}>
       <View style={[styles.dot, { backgroundColor: category?.color ?? theme.textSecondary }]} />
 
       <View style={styles.middle}>
@@ -34,7 +45,7 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
         style={{ color: isIncome ? theme.income : theme.expense }}>
         {isIncome ? '+' : '−'} {formatCurrency(transaction.amount)}
       </ThemedText>
-    </View>
+    </Pressable>
   );
 }
 

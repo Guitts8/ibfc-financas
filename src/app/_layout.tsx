@@ -19,14 +19,15 @@ SplashScreen.preventAutoHideAsync();
 function RootNavigator() {
   const { user, initializing } = useAuth();
 
+  // Mantém o <Stack> sempre montado (não retornamos null durante o initializing,
+  // senão a URL inicial de um deep-link se perde). Apenas seguramos a splash até
+  // saber se há sessão; durante esse tempo o user é null e o grupo (auth) fica
+  // ativo por baixo da splash, sem flash visível.
   useEffect(() => {
     if (!initializing) {
       SplashScreen.hideAsync();
     }
   }, [initializing]);
-
-  // Enquanto carrega o estado inicial de auth, mantém a splash (retorna vazio).
-  if (initializing) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

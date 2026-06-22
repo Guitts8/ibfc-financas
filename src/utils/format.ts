@@ -27,3 +27,19 @@ export function currentMonthLabel(date = new Date()): string {
   const label = new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(date);
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
+
+const monthYearFormatter = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
+
+/** Mês e ano capitalizados, ex.: "Junho 2026". */
+export function formatMonthYear(date: Date): string {
+  const label = monthYearFormatter.format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+const monthShortFormatter = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
+
+/** Mês abreviado sem ponto e capitalizado, ex.: "Jun" (rótulo de eixo de gráfico). */
+export function formatMonthShort(date: Date): string {
+  const label = monthShortFormatter.format(date).replace('.', '');
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}

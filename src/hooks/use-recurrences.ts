@@ -18,7 +18,7 @@ export interface UseRecurrencesResult {
   error: string | null;
 }
 
-export function useRecurrences(transactions: Transaction[]): UseRecurrencesResult {
+export function useRecurrences(transactions: Transaction[] = []): UseRecurrencesResult {
   const { user } = useAuth();
   const uid = user?.uid;
 

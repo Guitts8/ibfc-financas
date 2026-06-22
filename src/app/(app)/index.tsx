@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Timestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -5,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BalanceCard } from '@/components/finance/balance-card';
 import { PendingRecurrences, occurrenceKey } from '@/components/finance/pending-recurrences';
-import { RecurrencesManager } from '@/components/finance/recurrences-manager';
 import { TransactionForm } from '@/components/finance/transaction-form';
 import { TransactionRow } from '@/components/finance/transaction-row';
 import { ThemedText } from '@/components/themed-text';
@@ -23,15 +23,15 @@ import type { PendingOccurrence } from '@/utils/recurrence';
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const theme = useTheme();
+  const router = useRouter();
   const { transactions, totals, loading, error } = useTransactions();
-  const { recurrences, pending } = useRecurrences(transactions);
+  const { pending } = useRecurrences(transactions);
 
   const [formOpen, setFormOpen] = useState(false);
   // Transação em edição; null quando o modal está em modo de criação.
   const [editing, setEditing] = useState<Transaction | null>(null);
   // Ocorrência recorrente sendo editada antes de confirmar.
   const [pendingEdit, setPendingEdit] = useState<PendingOccurrence | null>(null);
-  const [recurrencesOpen, setRecurrencesOpen] = useState(false);
   // Ocorrências em processamento (desabilita os botões enquanto grava).
   const [busyKeys, setBusyKeys] = useState<Set<string>>(new Set());
 
@@ -148,7 +148,7 @@ export default function HomeScreen() {
           <View style={styles.headerActions}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setRecurrencesOpen(true)}
+              onPress={() => router.navigate('/recorrencias')}
               style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.6 : 1 }]}>
               <ThemedText type="smallBold" themeColor="tint">
                 Recorrências
@@ -240,15 +240,6 @@ export default function HomeScreen() {
           </ThemedView>
         </View>
       </Modal>
-
-      {user && (
-        <RecurrencesManager
-          visible={recurrencesOpen}
-          onClose={() => setRecurrencesOpen(false)}
-          uid={user.uid}
-          recurrences={recurrences}
-        />
-      )}
     </ThemedView>
   );
 }

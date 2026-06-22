@@ -23,6 +23,11 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Finanças</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.pie.fill" md="pie_chart" />
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="recorrencias">
+        <NativeTabs.Trigger.Label>Recorrências</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="arrow.triangle.2.circlepath" md="autorenew" />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

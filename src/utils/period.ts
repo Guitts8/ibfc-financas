@@ -72,3 +72,48 @@ export function formatPeriodLabel(period: Period): string {
   if (period.kind === 'month') return formatMonthYear(period.start);
   return `${formatMonthYear(period.start)} – ${formatMonthYear(period.end)}`;
 }
+
+/**
+ * Chave de período mensal no formato "AAAA-MM" (mês 1–12, com zero à esquerda).
+ * O formato é ordenável como string e serve de identidade de uma ocorrência
+ * recorrente (ver utils/recurrence.ts).
+ */
+export function periodKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Primeiro dia do mês de uma chave "AAAA-MM". */
+export function periodKeyToDate(key: string): Date {
+  const [year, month] = key.split('-').map(Number);
+  return new Date(year, month - 1, 1);
+}
+
+/** Rótulo legível de uma chave de período, ex.: "Junho 2026". */
+export function formatPeriodKey(key: string): string {
+  return formatMonthYear(periodKeyToDate(key));
+}
+
+/**
+ * Lista as chaves de período de `startKey` até `endKey` (inclusive), em ordem
+ * crescente. Retorna vazio se o início for posterior ao fim.
+ */
+export function enumeratePeriods(startKey: string, endKey: string): string[] {
+  const keys: string[] = [];
+  const end = periodKeyToDate(endKey);
+  const cursor = periodKeyToDate(startKey);
+  while (cursor <= end) {
+    keys.push(periodKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return keys;
+}
+
+/**
+ * Data de uma ocorrência mensal: o `dayOfMonth` dentro do mês da chave,
+ * limitado ao último dia do mês (ex.: dia 31 em fevereiro vira 28/29).
+ */
+export function dateForPeriod(key: string, dayOfMonth: number): Date {
+  const base = periodKeyToDate(key);
+  const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+  return new Date(base.getFullYear(), base.getMonth(), Math.min(dayOfMonth, lastDay));
+}

@@ -23,10 +23,38 @@ export interface Transaction {
   /** Data do lançamento. */
   date: Timestamp;
   createdAt: Timestamp;
+  /** Recorrência que originou esta transação (ausente em lançamentos avulsos). */
+  recurrenceId?: string;
+  /** Chave "AAAA-MM" da ocorrência recorrente; deduplica a geração mensal. */
+  periodKey?: string;
 }
 
 /** Dados para criar uma transação (sem campos gerados pelo servidor). */
 export type NewTransaction = Omit<Transaction, 'id' | 'createdAt'>;
+
+/**
+ * Regra de transação recorrente (mensal). Não é uma movimentação em si — o app
+ * gera transações pendentes a partir dela ao abrir (ver utils/recurrence.ts).
+ */
+export interface Recurrence {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  categoryId: string;
+  description: string;
+  /** Dia do mês do lançamento (1–31; limitado ao fim do mês quando necessário). */
+  dayOfMonth: number;
+  /** Primeiro mês a gerar, chave "AAAA-MM". */
+  startPeriod: string;
+  /** Quando falso, não gera novas pendências. */
+  active: boolean;
+  /** Períodos ("AAAA-MM") que o usuário pulou e não devem reaparecer. */
+  skippedPeriods: string[];
+  createdAt: Timestamp;
+}
+
+/** Dados para criar uma recorrência (sem campos gerados/derivados). */
+export type NewRecurrence = Omit<Recurrence, 'id' | 'createdAt' | 'skippedPeriods'>;
 
 /** Meta de economia ("guardar dinheiro"). */
 export interface Goal {

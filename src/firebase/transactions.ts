@@ -53,6 +53,8 @@ export function subscribeTransactions(
           // createdAt pode chegar null por um instante (serverTimestamp pendente).
           date: data.date as Timestamp,
           createdAt: (data.createdAt as Timestamp | null) ?? (data.date as Timestamp),
+          recurrenceId: data.recurrenceId as string | undefined,
+          periodKey: data.periodKey as string | undefined,
         } satisfies Transaction;
       });
       onData(transactions);
@@ -70,6 +72,10 @@ export async function addTransaction(uid: string, input: NewTransaction): Promis
     description: input.description.trim(),
     date: input.date ?? Timestamp.now(),
     createdAt: serverTimestamp(),
+    // Campos de origem só são gravados quando a transação vem de uma recorrência
+    // (o Firestore rejeita valores `undefined`).
+    ...(input.recurrenceId ? { recurrenceId: input.recurrenceId } : {}),
+    ...(input.periodKey ? { periodKey: input.periodKey } : {}),
   });
 }
 

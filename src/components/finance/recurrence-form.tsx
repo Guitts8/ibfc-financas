@@ -1,60 +1,51 @@
-import { Timestamp } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { TextField } from '@/components/ui/text-field';
-import { Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   DEFAULT_CATEGORIES,
-  type NewTransaction,
-  type Transaction,
+  type NewRecurrence,
+  type Recurrence,
   type TransactionType,
 } from '@/types/finance';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency, formatMonthYear } from '@/utils/format';
+import { periodKey, periodKeyToDate } from '@/utils/period';
 
-export interface TransactionFormProps {
-  /** Persiste a transação (criação ou edição); deve lançar em caso de falha. */
-  onSubmit: (input: NewTransaction) => Promise<void>;
+export interface RecurrenceFormProps {
+  onSubmit: (input: NewRecurrence) => Promise<void>;
   onCancel: () => void;
-  /** Valores iniciais: edição de transação ou pré-preenchimento de uma recorrência. */
-  initialValues?: Partial<Pick<Transaction, 'type' | 'amount' | 'categoryId' | 'description' | 'date'>>;
-  /** Quando presente, mostra a ação de excluir (só faz sentido editando uma existente). */
+  /** Quando presente, edita a recorrência (campos preenchidos). */
+  initial?: Recurrence;
   onDelete?: () => Promise<void>;
-  /** Rótulo do botão principal (padrão: "Salvar"). */
-  submitLabel?: string;
 }
 
-/** Primeira categoria disponível para um tipo (usada como padrão). */
 function firstCategoryId(type: TransactionType): string {
   return DEFAULT_CATEGORIES.find((c) => c.type === type)!.id;
 }
 
 /**
- * Formulário de transação: tipo (entrada/saída), valor, categoria e uma
- * descrição opcional. O valor é digitado em centavos e exibido formatado.
- * Em modo de edição (prop `initial`), os campos vêm preenchidos e a data
- * original é preservada.
+ * Formulário de recorrência mensal: tipo, valor, categoria, descrição, dia do
+ * mês, mês inicial e se está ativa. Espelha o TransactionForm, mas grava uma
+ * regra (NewRecurrence), não uma transação.
  */
-export function TransactionForm({
-  onSubmit,
-  onCancel,
-  initialValues,
-  onDelete,
-  submitLabel,
-}: TransactionFormProps) {
+export function RecurrenceForm({ onSubmit, onCancel, initial, onDelete }: RecurrenceFormProps) {
   const theme = useTheme();
 
-  const [type, setType] = useState<TransactionType>(initialValues?.type ?? 'expense');
+  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
   const [amountDigits, setAmountDigits] = useState(
-    initialValues?.amount != null ? String(Math.round(initialValues.amount * 100)) : '',
+    initial ? String(Math.round(initial.amount * 100)) : '',
   );
-  const [categoryId, setCategoryId] = useState(
-    () => initialValues?.categoryId ?? firstCategoryId(initialValues?.type ?? 'expense'),
+  const [categoryId, setCategoryId] = useState(() => initial?.categoryId ?? firstCategoryId('expense'));
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const [dayOfMonth, setDayOfMonth] = useState(initial?.dayOfMonth ?? new Date().getDate());
+  const [startMonth, setStartMonth] = useState(() =>
+    periodKeyToDate(initial?.startPeriod ?? periodKey(new Date())),
   );
-  const [description, setDescription] = useState(initialValues?.description ?? '');
+  const [active, setActive] = useState(initial?.active ?? true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -65,23 +56,28 @@ export function TransactionForm({
   function changeType(next: TransactionType) {
     if (next === type) return;
     setType(next);
-    setCategoryId(firstCategoryId(next)); // a categoria atual pode não valer para o novo tipo
+    setCategoryId(firstCategoryId(next));
   }
 
   function changeAmount(text: string) {
-    // Mantém só dígitos e limita para evitar overflow visual (até R$ 9.999.999,99).
     setAmountDigits(text.replace(/\D/g, '').slice(0, 9));
+  }
+
+  function changeDay(delta: number) {
+    setDayOfMonth((d) => Math.min(31, Math.max(1, d + delta)));
+  }
+
+  function shiftStart(delta: number) {
+    setStartMonth((m) => new Date(m.getFullYear(), m.getMonth() + delta, 1));
   }
 
   async function handleSubmit() {
     if (loading) return;
     setError(null);
-
     if (amount <= 0) {
       setError('Informe um valor maior que zero.');
       return;
     }
-
     setLoading(true);
     try {
       await onSubmit({
@@ -89,10 +85,10 @@ export function TransactionForm({
         amount,
         categoryId,
         description,
-        // Preserva a data original (edição) ou a sugerida (recorrência).
-        date: initialValues?.date ?? Timestamp.now(),
+        dayOfMonth,
+        startPeriod: periodKey(startMonth),
+        active,
       });
-      // Sucesso: a tela que chamou fecha o modal.
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível salvar.');
       setLoading(false);
@@ -121,23 +117,11 @@ export function TransactionForm({
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
-      {/* Seletor de tipo */}
       <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
-        <SegmentButton
-          label="Saída"
-          active={type === 'expense'}
-          activeColor={theme.expense}
-          onPress={() => changeType('expense')}
-        />
-        <SegmentButton
-          label="Entrada"
-          active={type === 'income'}
-          activeColor={theme.income}
-          onPress={() => changeType('income')}
-        />
+        <SegmentButton label="Saída" active={type === 'expense'} activeColor={theme.expense} onPress={() => changeType('expense')} />
+        <SegmentButton label="Entrada" active={type === 'income'} activeColor={theme.income} onPress={() => changeType('income')} />
       </View>
 
-      {/* Valor */}
       <View style={styles.amountBlock}>
         <ThemedText type="smallBold">Valor</ThemedText>
         <TextInput
@@ -147,14 +131,10 @@ export function TransactionForm({
           placeholderTextColor={theme.textSecondary}
           keyboardType="number-pad"
           inputMode="numeric"
-          style={[
-            styles.amountInput,
-            { color: type === 'income' ? theme.income : theme.expense },
-          ]}
+          style={[styles.amountInput, { color: type === 'income' ? theme.income : theme.expense }]}
         />
       </View>
 
-      {/* Categoria */}
       <View style={styles.field}>
         <ThemedText type="smallBold">Categoria</ThemedText>
         <View style={styles.chips}>
@@ -172,9 +152,7 @@ export function TransactionForm({
                     borderColor: selected ? c.color : theme.border,
                   },
                 ]}>
-                <ThemedText
-                  type="small"
-                  style={{ color: selected ? '#FFFFFF' : theme.text }}>
+                <ThemedText type="small" style={{ color: selected ? '#FFFFFF' : theme.text }}>
                   {c.label}
                 </ThemedText>
               </Pressable>
@@ -187,10 +165,50 @@ export function TransactionForm({
         label="Descrição (opcional)"
         value={description}
         onChangeText={setDescription}
-        placeholder="Ex.: Mercado da semana"
-        returnKeyType="done"
-        onSubmitEditing={handleSubmit}
+        placeholder="Ex.: Salário, Dízimo, Aluguel"
       />
+
+      {/* Dia do mês */}
+      <View style={styles.field}>
+        <ThemedText type="smallBold">Dia do mês</ThemedText>
+        <View style={[styles.stepper, { backgroundColor: theme.backgroundElement }]}>
+          <Stepper label="‹" onPress={() => changeDay(-1)} color={theme.text} />
+          <ThemedText type="smallBold" style={styles.stepperValue}>
+            Dia {dayOfMonth}
+          </ThemedText>
+          <Stepper label="›" onPress={() => changeDay(1)} color={theme.text} />
+        </View>
+        <ThemedText type="small" themeColor="textSecondary">
+          Em meses mais curtos, ajusta para o último dia.
+        </ThemedText>
+      </View>
+
+      {/* Mês inicial */}
+      <View style={styles.field}>
+        <ThemedText type="smallBold">A partir de</ThemedText>
+        <View style={[styles.stepper, { backgroundColor: theme.backgroundElement }]}>
+          <Stepper label="‹" onPress={() => shiftStart(-1)} color={theme.text} />
+          <ThemedText type="smallBold" style={styles.stepperValue}>
+            {formatMonthYear(startMonth)}
+          </ThemedText>
+          <Stepper label="›" onPress={() => shiftStart(1)} color={theme.text} />
+        </View>
+      </View>
+
+      {/* Ativa */}
+      <View style={styles.switchRow}>
+        <View style={styles.switchText}>
+          <ThemedText type="smallBold">Ativa</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Quando desligada, não gera novas pendências.
+          </ThemedText>
+        </View>
+        <Switch
+          value={active}
+          onValueChange={setActive}
+          trackColor={{ true: Brand.blue, false: theme.border }}
+        />
+      </View>
 
       {error && (
         <ThemedText type="small" themeColor="expense">
@@ -198,16 +216,20 @@ export function TransactionForm({
         </ThemedText>
       )}
 
-      <PrimaryButton label={submitLabel ?? 'Salvar'} loading={loading} onPress={handleSubmit} />
+      <PrimaryButton
+        label={initial ? 'Salvar alterações' : 'Criar recorrência'}
+        loading={loading}
+        onPress={handleSubmit}
+      />
 
       {onDelete && (
         <Pressable
           accessibilityRole="button"
           onPress={handleDelete}
           disabled={loading}
-          style={({ pressed }) => [styles.delete, { opacity: pressed ? 0.6 : 1 }]}>
+          style={({ pressed }) => [styles.textAction, { opacity: pressed ? 0.6 : 1 }]}>
           <ThemedText type="smallBold" themeColor="expense">
-            {confirmingDelete ? 'Toque novamente para confirmar a exclusão' : 'Excluir transação'}
+            {confirmingDelete ? 'Toque novamente para confirmar a exclusão' : 'Excluir recorrência'}
           </ThemedText>
         </Pressable>
       )}
@@ -216,7 +238,7 @@ export function TransactionForm({
         accessibilityRole="button"
         onPress={onCancel}
         disabled={loading}
-        style={({ pressed }) => [styles.cancel, { opacity: pressed ? 0.6 : 1 }]}>
+        style={({ pressed }) => [styles.textAction, { opacity: pressed ? 0.6 : 1 }]}>
         <ThemedText type="smallBold" themeColor="textSecondary">
           Cancelar
         </ThemedText>
@@ -244,6 +266,18 @@ function SegmentButton({
       <ThemedText type="smallBold" style={{ color: active ? '#FFFFFF' : undefined }}>
         {label}
       </ThemedText>
+    </Pressable>
+  );
+}
+
+function Stepper({ label, onPress, color }: { label: string; onPress: () => void; color: string }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [styles.stepperBtn, { opacity: pressed ? 0.5 : 1 }]}>
+      <ThemedText style={[styles.stepperBtnText, { color }]}>{label}</ThemedText>
     </Pressable>
   );
 }
@@ -290,11 +324,38 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.five,
     borderWidth: 1,
   },
-  delete: {
-    alignSelf: 'center',
-    paddingVertical: Spacing.two,
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
   },
-  cancel: {
+  stepperValue: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  stepperBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnText: {
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: '400',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  switchText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  textAction: {
     alignSelf: 'center',
     paddingVertical: Spacing.two,
   },

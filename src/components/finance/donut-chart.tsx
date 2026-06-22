@@ -62,10 +62,10 @@ export function DonutChart({ segments, size = 180, strokeWidth = 24, children }:
           strokeWidth={strokeWidth}
           fill="none"
         />
-        {/* Gira -90° para a primeira fatia começar no topo (12h). */}
-        <G rotation={-90} origin={`${size / 2}, ${size / 2}`}>
-          {arcs}
-        </G>
+        {/* Gira -90° para a primeira fatia começar no topo (12h). Usamos o
+            atributo `transform` padrão de SVG (em vez de rotation/origin) para
+            evitar o `transform-origin` inválido no DOM da versão web. */}
+        <G transform={`rotate(-90, ${size / 2}, ${size / 2})`}>{arcs}</G>
       </Svg>
       {children != null && (
         <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">

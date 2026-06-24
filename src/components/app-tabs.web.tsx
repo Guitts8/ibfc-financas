@@ -28,6 +28,9 @@ export default function AppTabs() {
           <TabTrigger name="recorrencias" href="/recorrencias" asChild>
             <TabButton>Recorrências</TabButton>
           </TabTrigger>
+          <TabTrigger name="metas" href="/metas" asChild>
+            <TabButton>Metas</TabButton>
+          </TabTrigger>
         </CustomTabList>
       </TabList>
     </Tabs>

@@ -28,6 +28,11 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Recorrências</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="arrow.triangle.2.circlepath" md="autorenew" />
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="metas">
+        <NativeTabs.Trigger.Label>Metas</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="target" md="flag" />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

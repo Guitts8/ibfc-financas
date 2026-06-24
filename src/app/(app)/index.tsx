@@ -5,6 +5,7 @@ import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BalanceCard } from '@/components/finance/balance-card';
+import { GoalsHighlight } from '@/components/finance/goals-highlight';
 import { PendingRecurrences, occurrenceKey } from '@/components/finance/pending-recurrences';
 import { TransactionForm } from '@/components/finance/transaction-form';
 import { TransactionRow } from '@/components/finance/transaction-row';
@@ -185,6 +186,7 @@ export default function HomeScreen() {
                   busyKeys={busyKeys}
                 />
               )}
+              <GoalsHighlight />
               <ThemedText type="smallBold" style={styles.sectionTitle}>
                 Transações recentes
               </ThemedText>
